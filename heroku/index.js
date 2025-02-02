@@ -2,7 +2,7 @@
  * Copyright 2016-present, Facebook, Inc.
  * All rights reserved.
  *
- * This source code is licensed under the license found in the
+ * This source code is licensed under the license found in the  
  * LICENSE file in the root directory of this source tree.
  */
 
@@ -19,16 +19,45 @@ app.use(bodyParser.json());
 
 var token = process.env.TOKEN || 'token';
 var received_updates = [];
+var posts = []; // Array to store posts
 
 app.get('/', function(req, res) {
   console.log(req);
   res.send('<pre>' + JSON.stringify(received_updates, null, 2) + '</pre>');
 });
 
+// Instagram login route  
+app.get('/instagram/login', function(req, res) {
+  // Redirect to Instagram login page here  
+  res.redirect('https://api.instagram.com/oauth/authorize?client_id=' + process.env.INSTAGRAM_CLIENT_ID + '&redirect_uri=' + process.env.REDIRECT_URI + '&scope=user_profile,user_media&response_type=code');
+});
+
+// Handle Instagram callback  
+app.get('/instagram/callback', function(req, res) {
+  var code = req.query.code;
+  // Exchange the code for an access token  
+  // Implement token fetching here and store it  
+  res.send('Login successful. You can now create posts.');
+});
+
+// Create a new post  
+app.post('/instagram/post', function(req, res) {
+  var newPost = req.body; // Assume the body contains post data  
+  posts.push(newPost); // Add post to the array  
+  console.log('New post created:', newPost);
+  res.sendStatus(201);
+});
+
+// View all posts  
+app.get('/instagram/posts', function(req, res) {
+  res.send(posts); // Return the posts array  
+});
+
+// Webhook routes  
 app.get(['/facebook', '/instagram', '/threads'], function(req, res) {
   if (
     req.query['hub.mode'] == 'subscribe' &&
-    req.query['hub.verify_token'] == token
+    req.query['hub.verify_token'] == token  
   ) {
     res.send(req.query['hub.challenge']);
   } else {
@@ -46,7 +75,7 @@ app.post('/facebook', function(req, res) {
   }
 
   console.log('request header X-Hub-Signature validated');
-  // Process the Facebook updates here
+  // Process the Facebook updates here  
   received_updates.unshift(req.body);
   res.sendStatus(200);
 });
@@ -54,7 +83,7 @@ app.post('/facebook', function(req, res) {
 app.post('/instagram', function(req, res) {
   console.log('Instagram request body:');
   console.log(req.body);
-  // Process the Instagram updates here
+  // Process the Instagram updates here  
   received_updates.unshift(req.body);
   res.sendStatus(200);
 });
@@ -62,7 +91,7 @@ app.post('/instagram', function(req, res) {
 app.post('/threads', function(req, res) {
   console.log('Threads request body:');
   console.log(req.body);
-  // Process the Threads updates here
+  // Process the Threads updates here  
   received_updates.unshift(req.body);
   res.sendStatus(200);
 });
